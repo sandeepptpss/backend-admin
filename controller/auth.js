@@ -14,17 +14,17 @@ exports.userLogin = async (req, res) => {
     if (!email) {
       return res.status(400).send({ message: 'Username or Email is required' });
     }
-    if(!password) {
+    if (!password) {
       return res.status(400).send({ message: 'Password is required' });
     }
-  // Search both username and email fields using the provided value
+    // Search both username and email fields using the provided value
     const user = await User.findOne({
       $or: [
         { username: email },
         { email: email }
       ]
     });
-    if(!user) {
+    if (!user) {
       return res.status(404).send({ message: 'Username or Email not found' });
     }
     if (!user.verified) {
@@ -35,14 +35,14 @@ exports.userLogin = async (req, res) => {
       return res.status(401).send({ message: 'Invalid credentials' });
     }
     const token = jwt.sign(
-      { 
-        id: user._id, 
-        role: user.role 
+      {
+        id: user._id,
+        role: user.role
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
-  )
-  return res.status(200).send({
+    )
+    return res.status(200).send({
       message: 'Login successful',
       user: {
         id: user._id,
@@ -118,7 +118,7 @@ exports.forgotPassword = async (req, res) => {
       },
     });
 
-  // Define email options, including the reset password link
+    // Define email options, including the reset password link
     const mailOptions = {
       to: user.email,
       from: process.env.EMAIL_USER,
@@ -137,24 +137,24 @@ exports.forgotPassword = async (req, res) => {
         text-align: center;">
         Reset your password
       </a>`,
-  };
-  await transporter.sendMail(mailOptions);
+    };
+    await transporter.sendMail(mailOptions);
     return res.status(200).send({
       message: 'Password reset email sent',
       token,
       expiresAt: expiration,
-  });
+    });
   } catch (error) {
     console.error('Error in forgotPassword:', error);
     return res.status(500).send({ message: 'Server error', error: error.message });
   }
 }
 // function resetPassword 
-exports.resetPassword = async (req, res) =>{
+exports.resetPassword = async (req, res) => {
   try {
     const { token } = req.query;
     const { password } = req.body;
-    if(!token) {
+    if (!token) {
       return res.status(400).send({ message: 'Token is required' });
     }
 
@@ -166,7 +166,7 @@ exports.resetPassword = async (req, res) =>{
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() }
     });
-    if(!user) {
+    if (!user) {
       return res.status(400).send({ message: 'Invalid or expired token' });
     }
     //Update password
@@ -176,7 +176,7 @@ exports.resetPassword = async (req, res) =>{
     user.resetPasswordExpires = null;
     await user.save();
     return res.status(200).send({ message: 'Password reset successful' });
-    }catch (error) {
+  } catch (error) {
     return res.status(500).send({ message: 'Server error', error: error.message });
   }
 }
@@ -197,92 +197,98 @@ exports.getUserProfile = async (req, res) => {
 }
 // Update user profile
 
-exports.updateUserProfile = async (req, res) => {
-  try {
-    const { name, email, gender, role } = req.body;
-
-    // Logged-in user (from JWT middleware)
-    const loggedInUser = await User.findById(req.user.id);
-    if (!loggedInUser) {
-      return res.status(401).json({ success: false, message: "Unauthorized user" });
-    }
-
-    // User being updated
-    const userToUpdate = await User.findById(req.params.id);
-    if (!userToUpdate) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    if (role && loggedInUser.role !== "admin") {
-      return res.status(403).json({ success: false, message: "Access denied. Only admin can update role." });
-    }
-
-    // Normal fields (allowed for everyone)
-    if (name) userToUpdate.name = name;
-    if (email) userToUpdate.email = email;
-    if (gender) userToUpdate.gender = gender;
-
-    // Only allow admin to update role
-    if (role && loggedInUser.role === "admin") {
-      userToUpdate.role = role;
-    }
-
-    // Handle profile upload (optional)
-    if (req.files && req.files.length > 0) {
-      const profileFile = req.files.find(f => f.fieldname === "profile");
-      if (profileFile) {
-        userToUpdate.profile = `uploads/images/${profileFile.filename}`;
-      }
-    }
-
-    await userToUpdate.save();
-
-    res.status(200).json({
-      success: true,
-      message: "User updated successfully",
-      user: userToUpdate,
-    });
-
-  } catch (error) {
-    console.error("Error updating user:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
-  }
-};
-
 // exports.updateUserProfile = async (req, res) => {
 //   try {
-//     const { name, email, role } = req.body;
-//     const user = await User.findById(req.user.id);
-//     if (!user) return res.status(404).json({ message: "User not found" });
-//     // Update allowed fields
-//     if (name) user.name = name;
-//     if (email) user.email = email;
-//     if (role) user.role = role;
+//     const { name, email, gender, role } = req.body;
+
+//     // Logged-in user (from JWT middleware)
+//     const loggedInUser = await User.findById(req.user.id);
+//     if (!loggedInUser) {
+//       return res.status(401).json({ success: false, message: "Unauthorized user" });
+//     }
+
+//     // User being updated
+//     const userToUpdate = await User.findById(req.params.id);
+//     if (!userToUpdate) {
+//       return res.status(404).json({ success: false, message: "User not found" });
+//     }
+
+//     if (role && loggedInUser.role !== "admin") {
+//       return res.status(403).json({ success: false, message: "Access denied. Only admin can update role." });
+//     }
+
+//     // Normal fields (allowed for everyone)
+//     if (name) userToUpdate.name = name;
+//     if (email) userToUpdate.email = email;
+//     if (gender) userToUpdate.gender = gender;
+
+//     // Only allow admin to update role
+//     if (role && loggedInUser.role === "admin") {
+//       userToUpdate.role = role;
+//     }
+
+//     // Handle profile upload (optional)
 //     if (req.files && req.files.length > 0) {
-//       // Find file with fieldname 'profile'
-//       const profileFile = req.files.find(f => f.fieldname === 'profile');
+//       const profileFile = req.files.find(f => f.fieldname === "profile");
 //       if (profileFile) {
-//         user.profile = `uploads/images/${profileFile.filename}`;
+//         userToUpdate.profile = `uploads/images/${profileFile.filename}`;
 //       }
-//   }
-//   await user.save();
+//     }
+
+//     await userToUpdate.save();
+
 //     res.status(200).json({
 //       success: true,
-//       message: "Profile updated successfully",
-//       user: {
-//         id: user._id,
-//         name: user.name,
-//         email: user.email,
-//         role: user.role,
-//         verified: user.verified,
-//         profile: user.profile,
-//       },
+//       message: "User updated successfully",
+//       user: userToUpdate,
 //     });
+
 //   } catch (error) {
-//     console.error("Error updating profile:", error);
+//     console.error("Error updating user:", error);
 //     res.status(500).json({ success: false, message: "Server error", error: error.message });
 //   }
-// }
+// };
+
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { name, email, role } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    // if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    // Update allowed fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (role && user.role !== "admin") {
+      if (role) user.role = role;
+    }
+    
+
+    if (req.files && req.files.length > 0) {
+      const profileFile = req.files.find(f => f.fieldname === 'profile');
+      if (profileFile) {
+        user.profile = `uploads/images/${profileFile.filename}`;
+      }
+    }
+    await user.save();
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        verified: user.verified,
+        profile: user.profile,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+}
 
 
 exports.changePassword = async (req, res) => {
