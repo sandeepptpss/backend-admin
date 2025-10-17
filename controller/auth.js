@@ -99,10 +99,9 @@ exports.forgotPassword = async (req, res) => {
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
-    // Generate token and set expiration
+
     const token = crypto.randomBytes(32).toString('hex');
     const expiration = Date.now() + 3600000;
-    // Save token and expiration to the user's record
 
     user.resetPasswordToken = token;
     user.resetPasswordExpires = expiration;
@@ -118,7 +117,7 @@ exports.forgotPassword = async (req, res) => {
       },
     });
 
-    // Define email options, including the reset password link
+  // Define email options, including the reset password link
     const mailOptions = {
       to: user.email,
       from: process.env.EMAIL_USER,
@@ -130,7 +129,7 @@ exports.forgotPassword = async (req, res) => {
         padding: 10px 20px;
         font-size: 16px;
         color: #ffffff;
-        background-color: #000000ff;
+        background-color: #000000;
         text-decoration: none;
         border-radius: 5px;
         border: none;
@@ -181,8 +180,7 @@ exports.resetPassword = async (req, res) => {
   }
 }
 
-
-
+// Get user profile 
 exports.getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password -resetPasswordToken -resetPasswordExpires");
@@ -195,59 +193,10 @@ exports.getUserProfile = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 }
+
 // Update user profile
 
-// exports.updateUserProfile = async (req, res) => {
-//   try {
-//     const { name, email, gender, role } = req.body;
 
-//     // Logged-in user (from JWT middleware)
-//     const loggedInUser = await User.findById(req.user.id);
-//     if (!loggedInUser) {
-//       return res.status(401).json({ success: false, message: "Unauthorized user" });
-//     }
-
-//     // User being updated
-//     const userToUpdate = await User.findById(req.params.id);
-//     if (!userToUpdate) {
-//       return res.status(404).json({ success: false, message: "User not found" });
-//     }
-
-//     if (role && loggedInUser.role !== "admin") {
-//       return res.status(403).json({ success: false, message: "Access denied. Only admin can update role." });
-//     }
-
-//     // Normal fields (allowed for everyone)
-//     if (name) userToUpdate.name = name;
-//     if (email) userToUpdate.email = email;
-//     if (gender) userToUpdate.gender = gender;
-
-//     // Only allow admin to update role
-//     if (role && loggedInUser.role === "admin") {
-//       userToUpdate.role = role;
-//     }
-
-//     // Handle profile upload (optional)
-//     if (req.files && req.files.length > 0) {
-//       const profileFile = req.files.find(f => f.fieldname === "profile");
-//       if (profileFile) {
-//         userToUpdate.profile = `uploads/images/${profileFile.filename}`;
-//       }
-//     }
-
-//     await userToUpdate.save();
-
-//     res.status(200).json({
-//       success: true,
-//       message: "User updated successfully",
-//       user: userToUpdate,
-//     });
-
-//   } catch (error) {
-//     console.error("Error updating user:", error);
-//     res.status(500).json({ success: false, message: "Server error", error: error.message });
-//   }
-// };
 
 exports.updateUserProfile = async (req, res) => {
   try {
@@ -263,7 +212,7 @@ exports.updateUserProfile = async (req, res) => {
     if (role && user.role !== "admin") {
       if (role) user.role = role;
     }
-    
+
 
     if (req.files && req.files.length > 0) {
       const profileFile = req.files.find(f => f.fieldname === 'profile');
@@ -294,7 +243,7 @@ exports.updateUserProfile = async (req, res) => {
 exports.changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
-
+    
     if (!oldPassword || !newPassword) {
       return res.status(400).json({ message: "Please provide all fields" });
     }
@@ -317,13 +266,14 @@ exports.changePassword = async (req, res) => {
 
     // Hash new password
     const salt = await bcrypt.genSalt(10);
+
     user.password = await bcrypt.hash(newPassword, salt);
 
     await user.save();
 
     res.status(200).json({ message: "Password changed successfully" });
   } catch (error) {
-    console.error("Error changing password:", error);
+
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };

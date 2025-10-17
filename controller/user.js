@@ -61,17 +61,20 @@ exports.registerUser = async (req, res)=> {
           await sendAdminNotification(email, verificationToken);
           return res.status(200).json({ code: 200, message: 'Registration updated. Awaiting admin verification' });
       }
+
       const hashedPassword = await bcrypt.hash(password, 10);
       const newUser = new User({ name, username, gender, email,  profile: profile.path, password: hashedPassword, verified: false });
       await newUser.save();
-
+      
       const verificationToken = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
       await sendAdminNotification(email, verificationToken);
       res.status(201).json({ code: 201, message: 'Registration successful. Awaiting admin verification' });
-  } catch (error) {
+      } catch (error) {
+
       res.status(500).json({ code: 500, message: 'Internal server error', error: error.message });
   }
 };
+
 // Admin verification endpoint
 exports.verifyUser = async (req, res) => {
   const { token } = req.params;
@@ -152,7 +155,6 @@ exports.updateUserVerification = async (req, res) => {
 
    res.status(200).json({ code: 200, message: 'User verification status updated', user });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ code: 500, message: 'Internal Server Error' });
   }
 }
@@ -203,7 +205,7 @@ exports.updateUser = async (req, res) =>{
       }
       return res.status(200).json({
         code: 200,
-        message: 'Upadted User Data successfully',
+        message: 'Upadted user data successfully',
         user: updatedUser,
       });
     }
@@ -247,7 +249,6 @@ exports.viewProfile = async (req, res) => {
     if (req.user._id !== req.params.id && req.user.role !== "admin") {
       return res.status(403).json({ message: "Access denied" });
     }
-
     const user = await User.findById(req.params.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
