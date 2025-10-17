@@ -80,7 +80,7 @@ app.listen(PORT, () => {
     console.log(`Server started: http://localhost:${PORT}`);
 })
 
-// backeup old 
+// backeup old code
 // require('dotenv').config();
 // require('./db/config');
 // const express = require('express');
